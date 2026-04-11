@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Denúncia Anônima · Combate à Homofobia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: rgba(255,255,255,0.07);
+      --border-accent: rgba(255,100,180,0.4);
+      --text: #f0eef8;
+      --muted: #8b87a0;
+      --accent1: #ff64b4;
+      --accent2: #7c3aed;
+      --accent3: #06d6a0;
+      --gradient: linear-gradient(135deg, #ff64b4, #7c3aed, #3b82f6);
+      --shadow: 0 25px 80px rgba(124,58,237,0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -30%;
+      left: -20%;
+      width: 70vw;
+      height: 70vh;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 50vw;
+      height: 60vh;
+      background: radial-gradient(ellipse, rgba(255,100,180,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      padding: 56px 0 0;
+      text-align: center;
+    }
+
+    .pride-bar {
+      display: flex;
+      height: 4px;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 48px;
+      background: linear-gradient(to right, #e40303, #ff8c00, #ffed00, #008026, #004dff, #750787);
+    }
+
+    .shield-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      background: var(--gradient);
+      border-radius: 18px;
+      margin-bottom: 24px;
+      font-size: 28px;
+      box-shadow: 0 8px 32px rgba(124,58,237,0.4);
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent1);
+      background: rgba(255,100,180,0.1);
+      border: 1px solid rgba(255,100,180,0.2);
+      padding: 5px 14px;
+      border-radius: 100px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    h1 span {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 500px;
+      margin: 0 auto 48px;
+    }
+
+    /* Info cards */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      text-align: center;
+      transition: border-color 0.3s;
+    }
+
+    .info-card:hover { border-color: var(--border-accent); }
+
+    .info-card .icon { font-size: 22px; margin-bottom: 8px; }
+    .info-card .label { font-size: 12px; color: var(--muted); font-weight: 400; }
+    .info-card .value { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px; }
+
+    /* Form card */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: var(--shadow);
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gradient);
+    }
+
+    .form-section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: 0.01em;
+    }
+
+    label .required {
+      color: var(--accent1);
+      margin-left: 3px;
+    }
+
+    label .hint {
+      font-weight: 300;
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      padding: 14px 16px;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      outline: none;
+      appearance: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+      background: rgba(124,58,237,0.05);
+    }
+
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.5);
+      cursor: pointer;
+    }
+
+    select option { background: #1a1a24; }
+
+    textarea {
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.6;
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Anonymity notice */
+    .anon-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: rgba(6,214,160,0.07);
+      border: 1px solid rgba(6,214,160,0.2);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 28px;
+    }
+
+    .anon-notice .icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+    .anon-notice p {
+      font-size: 13px;
+      color: #7de8c8;
+      line-height: 1.6;
+    }
+
+    .anon-notice strong { font-weight: 500; }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      padding: 18px;
+      background: var(--gradient);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 30px rgba(124,58,237,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-submit:hover {
+      opacity: 0.92;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(124,58,237,0.4);
+    }
+
+    .btn-submit:active { transform: translateY(0); }
+
+    .btn-submit.loading { opacity: 0.7; pointer-events: none; }
+
+    .btn-submit .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 10px;
+    }
+
+    .btn-submit.loading .spinner { display: inline-block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Success modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      padding: 24px;
+    }
+
+    .modal-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px 40px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modal-overlay.visible .modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(to right, #06d6a0, #3b82f6);
+    }
+
+    .modal-icon {
+      font-size: 52px;
+      margin-bottom: 20px;
+      animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .modal p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .protocolo-box {
+      background: var(--surface2);
+      border: 1px solid rgba(6,214,160,0.25);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 28px;
+    }
+
+    .protocolo-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .protocolo-code {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent3);
+      letter-spacing: 0.1em;
+    }
+
+    .btn-close {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      padding: 14px 32px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn-close:hover {
+      background: rgba(124,58,237,0.1);
+      border-color: rgba(124,58,237,0.3);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 32px 0 48px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    footer a {
+      color: var(--accent1);
+      text-decoration: none;
+    }
+
+    .disque100 {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,100,180,0.08);
+      border: 1px solid rgba(255,100,180,0.2);
+      border-radius: 10px;
+      padding: 8px 16px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--accent1);
+    }
+
+    @media (max-width: 600px) {
+      .form-card { padding: 28px 20px; }
+      .row-2 { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Staggered entrance */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.6s ease forwards;
+    }
+    .fade-in:nth-child(1) { animation-delay: 0.1s; }
+    .fade-in:nth-child(2) { animation-delay: 0.2s; }
+    .fade-in:nth-child(3) { animation-delay: 0.3s; }
+    .fade-in:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="pride-bar"></div>
+
+    <div class="fade-in">
+      <div class="shield-icon">🛡️</div>
+    </div>
+
+    <div class="fade-in">
+      <div class="badge">Denúncia 100% Anônima</div>
+      <h1>Sua voz importa.<br><span>Juntos contra a homofobia.</span></h1>
+      <p class="subtitle">Registre situações de homofobia de forma segura, sigilosa e sem identificação. Nenhum dado pessoal é coletado.</p>
+    </div>
+
+    <div class="info-grid fade-in">
+      <div class="info-card">
+        <div class="icon">🔒</div>
+        <div class="value">Sigilo Total</div>
+        <div class="label">Nenhum dado pessoal</div>
+      </div>
+      <div class="info-card">
+        <div class="icon">⚡</div>
+        <div class="value">Imediato</div>
+        <div class="label">Registro instantâneo</div>
+      </div>
+      <div class="info-card">
+        <div class="icon">📋</div>
+        <div class="value">Protocolo</div>
+        <div class="label">Rastreável após envio</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="form-card fade-in">
+    <div class="form-section-title">📅 Sobre o Ocorrido</div>
+
+    <form id="denunciaForm">
+      <div class="row-2">
+        <div class="form-group">
+          <label for="data_ocorrido">
+            Data do Ocorrido <span class="required">*</span>
+          </label>
+          <input type="date" id="data_ocorrido" name="data_ocorrido" required />
+        </div>
+        <div class="form-group">
+          <label for="horario_ocorrido">
+            Horário do Ocorrido <span class="hint">opcional</span>
+          </label>
+          <input type="time" id="horario_ocorrido" name="horario_ocorrido" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tipo_ocorrido">
+          Tipo de Ocorrência <span class="hint">opcional</span>
+        </label>
+        <select id="tipo_ocorrido" name="tipo_ocorrido">
+          <option value="">Selecione...</option>
+          <option value="Agressão verbal">Agressão verbal / xingamentos</option>
+          <option value="Agressão física">Agressão física</option>
+          <option value="Discriminação no trabalho">Discriminação no trabalho</option>
+          <option value="Discriminação em espaço público">Discriminação em espaço público</option>
+          <option value="Ameaça">Ameaça ou intimidação</option>
+          <option value="Cyberbullying">Cyberbullying / ódio online</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="local_ocorrido">
+          Local do Ocorrido <span class="required">*</span>
+          <span class="hint">Ex: Rua, bairro, cidade, estabelecimento...</span>
+        </label>
+        <input
+          type="text"
+          id="local_ocorrido"
+          name="local_ocorrido"
+          placeholder="Descreva o local onde aconteceu"
+          required
+        />
+      </div>
+
+      <div class="form-section-title" style="margin-top: 8px;">📝 Detalhes</div>
+
+      <div class="form-group">
+        <label for="descricao_ocorrido">
+          Descrição do Ocorrido <span class="required">*</span>
+          <span class="hint">Descreva com o máximo de detalhes</span>
+        </label>
+        <textarea
+          id="descricao_ocorrido"
+          name="descricao_ocorrido"
+          placeholder="Relate o que aconteceu: o que foi dito ou feito, contexto, testemunhas, etc."
+          required
+          rows="5"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="descricao_individuo">
+          Descrição do Indivíduo <span class="required">*</span>
+          <span class="hint">Aparência, vestimenta, características marcantes</span>
+        </label>
+        <textarea
+          id="descricao_individuo"
+          name="descricao_individuo"
+          placeholder="Descreva a pessoa responsável pelo ato: altura aproximada, cor do cabelo, roupas, tatuagens, placa de veículo, etc."
+          required
+          rows="4"
+        ></textarea>
+      </div>
+
+      <div class="anon-notice">
+        <div class="icon">🔐</div>
+        <p>
+          <strong>Garantia de anonimato:</strong> Nenhuma informação de identificação pessoal é coletada ou armazenada. Seu IP não é registrado. A denúncia é completamente sigilosa.
+        </p>
+      </div>
+
+      <button type="submit" class="btn-submit" id="btnSubmit">
+        <span class="spinner" id="spinner"></span>
+        <span id="btnText">Enviar Denúncia com Segurança</span>
+      </button>
+    </form>
+  </div>
+
+  <footer>
+    <p>Em caso de emergência ou risco imediato, ligue para o <strong>190</strong> (Polícia Militar)</p>
+    <a class="disque100" href="tel:100">
+      📞 Disque 100 — Direitos Humanos
+    </a>
+    <p style="margin-top: 16px; font-size: 12px;">
+      Este sistema é mantido de forma independente e segura.<br>
+      Toda denúncia contribui para mapear e combater a homofobia.
+    </p>
+  </footer>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">✅</div>
+    <h2>Denúncia Registrada!</h2>
+    <p>Sua denúncia foi enviada com sucesso e será analisada com total sigilo. Guarde seu número de protocolo.</p>
+    <div class="protocolo-box">
+      <div class="protocolo-label">Número de Protocolo</div>
+      <div class="protocolo-code" id="protocoloCode">—</div>
+    </div>
+    <button class="btn-close" onclick="fecharModal()">Fazer nova denúncia</button>
+  </div>
+</div>
+
+<script>
+  // Set max date to today
+  document.getElementById('data_ocorrido').max = new Date().toISOString().split('T')[0];
+
+  const form = document.getElementById('denunciaForm');
+  const btn = document.getElementById('btnSubmit');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btnText');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    btn.classList.add('loading');
+    btnText.textContent = 'Enviando...';
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch('/denunciar', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.sucesso) {
+        document.getElementById('protocoloCode').textContent = data.protocolo;
+        document.getElementById('modalOverlay').classList.add('visible');
+        form.reset();
+      } else {
+        alert('Erro ao enviar. Por favor, tente novamente.');
+      }
+    } catch (err) {
+      alert('Erro de conexão. Verifique sua internet e tente novamente.');
+    } finally {
+      btn.classList.remove('loading');
+      btnText.textContent = 'Enviar Denúncia com Segurança';
+    }
+  });
+
+  function fecharModal() {
+    document.getElementById('modalOverlay').classList.remove('visible');
+  }
+
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) fecharModal();
+  });
+</script>
+</body>
+</html>
