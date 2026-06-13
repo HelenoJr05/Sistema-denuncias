@@ -3,176 +3,283 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel Admin · Denúncias</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <title>Painel Administrativo — Denúncias</title>
   <style>
-    :root {
-      --bg: #0a0a0f;
-      --surface: #111118;
-      --surface2: #1a1a24;
-      --border: rgba(255,255,255,0.07);
-      --text: #f0eef8;
-      --muted: #8b87a0;
-      --accent1: #ff64b4;
-      --accent2: #7c3aed;
-      --accent3: #06d6a0;
-      --gradient: linear-gradient(135deg, #ff64b4, #7c3aed, #3b82f6);
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 300;
-      padding: 40px 24px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      padding: 30px 20px;
     }
-    .container { max-width: 900px; margin: 0 auto; }
-    .pride-bar {
-      height: 4px;
-      border-radius: 2px;
-      background: linear-gradient(to right, #e40303, #ff8c00, #ffed00, #008026, #004dff, #750787);
-      margin-bottom: 40px;
-    }
-    h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: 32px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-    h1 span {
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 32px; }
-    .stat {
-      display: inline-block;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 20px;
-      font-family: 'Syne', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 32px;
-    }
-    .stat span { color: var(--accent1); font-size: 20px; }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 24px;
-      margin-bottom: 16px;
-      border-left: 3px solid var(--accent2);
-      transition: border-color 0.2s;
-    }
-    .card:hover { border-left-color: var(--accent1); }
-    .card-header {
+
+    .header {
+      max-width: 1100px;
+      margin: 0 auto 30px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 15px;
     }
-    .protocolo {
-      font-family: 'Syne', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent3);
-      letter-spacing: 0.08em;
+
+    .header h1 { color: #f0f6fc; font-size: 1.5rem; }
+    .header p { color: #8b949e; font-size: 0.85rem; margin-top: 4px; }
+
+    .stats {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      max-width: 1100px;
+      margin: 0 auto 30px;
     }
-    .date-badge {
-      font-size: 12px;
-      color: var(--muted);
-      background: var(--surface2);
+
+    .stat-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 18px 24px;
+      min-width: 150px;
+    }
+
+    .stat-card .num { font-size: 2rem; font-weight: 700; color: #58a6ff; }
+    .stat-card .label { font-size: 0.8rem; color: #8b949e; margin-top: 4px; }
+
+    .btn {
+      padding: 9px 18px;
       border-radius: 8px;
-      padding: 4px 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: opacity 0.2s;
     }
-    .field { margin-bottom: 12px; }
-    .field-label {
-      font-size: 11px;
+    .btn:hover { opacity: 0.8; }
+    .btn-primary { background: #238636; color: #fff; }
+    .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+
+    .search-bar {
+      max-width: 1100px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .search-bar input:focus { border-color: #58a6ff; }
+
+    .table-wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead { background: #21262d; }
+
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 0.8rem;
+      color: #8b949e;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--accent2);
-      font-weight: 700;
-      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
     }
-    .field-value { font-size: 14px; line-height: 1.6; color: var(--text); }
-    .tipo-tag {
+
+    td {
+      padding: 14px 16px;
+      border-top: 1px solid #21262d;
+      font-size: 0.88rem;
+      vertical-align: top;
+    }
+
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge {
       display: inline-block;
-      font-size: 11px;
-      background: rgba(124,58,237,0.15);
-      border: 1px solid rgba(124,58,237,0.3);
-      color: #c4b5fd;
-      border-radius: 6px;
       padding: 3px 10px;
-      margin-bottom: 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
-    .empty {
+    .badge-green { background: rgba(35,134,54,0.2); color: #3fb950; border: 1px solid rgba(35,134,54,0.3); }
+    .badge-yellow { background: rgba(210,153,34,0.2); color: #d29922; border: 1px solid rgba(210,153,34,0.3); }
+
+    .protocolo-code {
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #79c0ff;
+      background: rgba(121,192,255,0.08);
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+
+    .truncate { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+    .truncate:hover { white-space: normal; }
+
+    #loading, #empty {
       text-align: center;
-      padding: 80px 40px;
-      color: var(--muted);
-      font-size: 16px;
+      padding: 50px;
+      color: #8b949e;
     }
-    .empty .icon { font-size: 48px; display: block; margin-bottom: 16px; }
-    a.back {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted);
+
+    .btn-back {
+      display: inline-block;
+      color: #58a6ff;
       text-decoration: none;
-      font-size: 14px;
-      margin-bottom: 24px;
-      transition: color 0.2s;
+      font-size: 0.85rem;
     }
-    a.back:hover { color: var(--text); }
+    .btn-back:hover { text-decoration: underline; }
+
+    @media (max-width: 700px) {
+      th:nth-child(n+4), td:nth-child(n+4) { display: none; }
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="pride-bar"></div>
-  <a class="back" href="/">← Voltar ao formulário</a>
-  <h1>Painel <span>Administrativo</span></h1>
-  <p class="subtitle">Registro de denúncias recebidas — acesso interno</p>
-  <div class="stat">Total de denúncias: <span>{{ total }}</span></div>
 
-  {% if denuncias %}
-    {% for d in denuncias|reverse %}
-    <div class="card">
-      <div class="card-header">
-        <span class="protocolo">{{ d.protocolo }}</span>
-        <span class="date-badge">📅 Recebida em {{ d.data_registro[:10] }}</span>
-      </div>
-      {% if d.tipo_ocorrido and d.tipo_ocorrido != 'Não especificado' %}
-        <div class="tipo-tag">{{ d.tipo_ocorrido }}</div>
-      {% endif %}
-      <div class="field">
-        <div class="field-label">Data e Horário do Ocorrido</div>
-        <div class="field-value">{{ d.data_hora_formatada if d.data_hora_formatada else d.data_ocorrido }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">Local</div>
-        <div class="field-value">{{ d.local_ocorrido }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">Descrição do Ocorrido</div>
-        <div class="field-value">{{ d.descricao_ocorrido }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">Descrição do Indivíduo</div>
-        <div class="field-value">{{ d.descricao_individuo }}</div>
-      </div>
-    </div>
-    {% endfor %}
-  {% else %}
-    <div class="empty">
-      <span class="icon">📋</span>
-      Nenhuma denúncia registrada ainda.
-    </div>
-  {% endif %}
+<div class="header">
+  <div>
+    <h1>📋 Painel Administrativo</h1>
+    <p>Sistema de Denúncias Anônimas — Combate à Homofobia</p>
+    <a class="btn-back" href="index.html">← Voltar ao formulário</a>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-secondary" onclick="carregarDenuncias()">🔄 Atualizar</button>
+  </div>
 </div>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="num" id="stat-total">—</div>
+    <div class="label">Total de Denúncias</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" id="stat-hoje">—</div>
+    <div class="label">Hoje</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" id="stat-recebidas">—</div>
+    <div class="label">Recebidas</div>
+  </div>
+</div>
+
+<div class="search-bar">
+  <input type="text" id="busca" placeholder="🔍 Filtrar por protocolo, local, tipo..." oninput="filtrar()" />
+</div>
+
+<div class="table-wrapper">
+  <div id="loading">⏳ Carregando denúncias...</div>
+  <div id="empty" style="display:none;">📭 Nenhuma denúncia encontrada.</div>
+  <table id="tabela" style="display:none;">
+    <thead>
+      <tr>
+        <th>Protocolo</th>
+        <th>Data do Ocorrido</th>
+        <th>Tipo</th>
+        <th>Local</th>
+        <th>Descrição</th>
+        <th>Status</th>
+        <th>Registrado em</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<script>
+  // ⚠️ Substitua pela URL do seu API Gateway após o deploy
+  const API_URL = "https://cr8zw9p6v2.execute-api.us-east-1.amazonaws.com/prod";
+
+  let todasDenuncias = [];
+
+  async function carregarDenuncias() {
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("tabela").style.display = "none";
+    document.getElementById("empty").style.display = "none";
+
+    try {
+      const res = await fetch(`${API_URL}/admin/denuncias`);
+      const data = await res.json();
+      todasDenuncias = data.denuncias || [];
+      renderizar(todasDenuncias);
+      calcularStats(todasDenuncias);
+    } catch (err) {
+      document.getElementById("loading").textContent = "❌ Erro ao carregar dados: " + err.message;
+    }
+  }
+
+  function calcularStats(lista) {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const qtdHoje = lista.filter(d => (d.data_registro || "").startsWith(hoje)).length;
+    const qtdRecebidas = lista.filter(d => d.status === "Recebida").length;
+
+    document.getElementById("stat-total").textContent = lista.length;
+    document.getElementById("stat-hoje").textContent = qtdHoje;
+    document.getElementById("stat-recebidas").textContent = qtdRecebidas;
+  }
+
+  function filtrar() {
+    const termo = document.getElementById("busca").value.toLowerCase();
+    const filtradas = todasDenuncias.filter(d =>
+      (d.protocolo || "").toLowerCase().includes(termo) ||
+      (d.local_ocorrido || "").toLowerCase().includes(termo) ||
+      (d.tipo_ocorrido || "").toLowerCase().includes(termo) ||
+      (d.descricao_ocorrido || "").toLowerCase().includes(termo)
+    );
+    renderizar(filtradas);
+  }
+
+  function renderizar(lista) {
+    document.getElementById("loading").style.display = "none";
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+
+    if (lista.length === 0) {
+      document.getElementById("empty").style.display = "block";
+      document.getElementById("tabela").style.display = "none";
+      return;
+    }
+
+    document.getElementById("tabela").style.display = "table";
+    document.getElementById("empty").style.display = "none";
+
+    lista.forEach(d => {
+      const dataRegistro = d.data_registro ? new Date(d.data_registro).toLocaleString("pt-BR") : "—";
+      const badgeClass = d.status === "Recebida" ? "badge-green" : "badge-yellow";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="protocolo-code">${d.protocolo || "—"}</span></td>
+        <td>${d.data_hora_formatada || d.data_ocorrido || "—"}</td>
+        <td>${d.tipo_ocorrido || "—"}</td>
+        <td class="truncate" title="${d.local_ocorrido || ""}">${d.local_ocorrido || "—"}</td>
+        <td class="truncate" title="${d.descricao_ocorrido || ""}">${d.descricao_ocorrido || "—"}</td>
+        <td><span class="badge ${badgeClass}">${d.status || "—"}</span></td>
+        <td style="white-space:nowrap">${dataRegistro}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  carregarDenuncias();
+</script>
+
 </body>
 </html>
