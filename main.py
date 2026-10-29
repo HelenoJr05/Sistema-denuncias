@@ -19,6 +19,7 @@ APP_VERSION = os.getenv("APP_VERSION", "dev")
 # Funções auxiliares de persistência
 # ─────────────────────────────────────────────
 
+
 def carregar_denuncias():
     if os.path.exists(DENUNCIAS_FILE):
         with open(DENUNCIAS_FILE, "r", encoding="utf-8") as f:
