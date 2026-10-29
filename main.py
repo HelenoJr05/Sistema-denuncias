@@ -12,7 +12,8 @@ app = FastAPI(title="Sistema de Denúncias Anônimas - Homofobia")
 
 templates = Jinja2Templates(directory="templates")
 
-DENUNCIAS_FILE = "denuncias.json"
+DENUNCIAS_FILE = os.getenv("DENUNCIAS_FILE", "denuncias.json")
+APP_VERSION = os.getenv("APP_VERSION", "dev")
 
 # ─────────────────────────────────────────────
 # Funções auxiliares de persistência
@@ -138,3 +139,8 @@ async def listar_denuncias(request: Request):
         return templates.TemplateResponse(request, "admin.html", context)
     except TypeError:
         return templates.TemplateResponse("admin.html", {"request": request, **context})
+
+
+@app.get("/health", response_class=JSONResponse)
+async def health():
+    return {"status": "ok", "version": APP_VERSION}
