@@ -1,0 +1,21 @@
+services:
+  app:
+    # Em deploy, a imagem vem do GHCR na versão escolhida (APP_TAG).
+    # Em desenvolvimento, "docker compose up --build" constrói a imagem localmente.
+    image: ghcr.io/${GHCR_OWNER:-helenojr05}/sistema-denuncias:${APP_TAG:-latest}
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_TAG:-dev}
+    container_name: sistema-denuncias
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      DENUNCIAS_FILE: /data/denuncias.json
+      APP_VERSION: ${APP_TAG:-dev}
+    volumes:
+      - denuncias_data:/data
+    restart: unless-stopped
+
+volumes:
+  denuncias_data:
