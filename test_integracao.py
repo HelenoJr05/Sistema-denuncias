@@ -9,7 +9,6 @@ Como executar:
 """
 
 import pytest
-import pytest_asyncio
 from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient, ASGITransport
 
