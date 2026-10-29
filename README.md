@@ -10,22 +10,18 @@ Sistema web para registro anônimo de ocorrências de homofobia.
 Usuário
   │
   ▼
-Frontend (templates Jinja2 servidos pela própria API)
-  │
+FastAPI (main.py) — /, /denunciar, /admin/denuncias, /api/cep/{cep}, /health
+  │        └── templates Jinja2 (frontend servido pela própria API)
   ▼
-FastAPI (main.py) — rotas /, /denunciar, /admin/denuncias, /api/cep/{cep}
-  │
-  ▼
-Persistência local em JSON (denuncias.json)
+Persistência em JSON (volume Docker /data/denuncias.json)
   │
   ▼
 Integração externa: ViaCEP (enriquecimento de endereço)
 ```
 
-> **Nota:** versões anteriores do README descreviam uma arquitetura serverless
-> na AWS (Lambda / API Gateway / DynamoDB / S3). Essa é uma evolução planejada
-> para as próximas fases do projeto (A2/A3, com Docker e IaC). A implementação
-> atual roda localmente com FastAPI e persistência em arquivo.
+> **Nota:** existe também um protótipo anterior publicado na AWS
+> (S3 + API Gateway + Lambda), mantido apenas como prova de conceito.
+> A fonte da verdade do projeto é este repositório (FastAPI + Docker).
 
 ---
 
@@ -34,8 +30,9 @@ Integração externa: ViaCEP (enriquecimento de endereço)
 - 📋 Formulário de denúncia com campos obrigatórios e opcionais
 - 🔒 100% anônimo — sem coleta de dados pessoais
 - 🔑 Geração automática de protocolo único
-- 🌍 Enriquecimento automático de endereço via CEP (API pública ViaCEP)
-- 📊 Painel administrativo (`/admin/denuncias`) para visualizar denúncias
+- 🌍 Enriquecimento de endereço via CEP (API pública ViaCEP)
+- 📊 Painel administrativo (`/admin/denuncias`)
+- ❤️ Endpoint de saúde (`/health`) com a versão em execução
 
 ---
 
@@ -43,82 +40,64 @@ Integração externa: ViaCEP (enriquecimento de endereço)
 
 ```
 ├── .github/workflows/
-│   └── ci.yml              # Pipeline de CI (lint + testes)
-├── templates/               # Templates Jinja2 (index.html, admin.html)
-├── main.py                  # Aplicação FastAPI
-├── test_integracao.py       # Testes de integração e mockados
-├── requirements.txt
-└── README.md
+│   ├── ci.yml              # CI: lint + testes (push/PR)
+│   ├── cd.yml              # CD: build, GHCR, release, deploy simulado (tag vX.Y.Z)
+│   └── rollback.yml        # Rollback manual para uma versão anterior
+├── docs/
+│   └── ROLLBACK.md         # Versionamento semântico e simulação de rollback
+├── templates/              # Templates Jinja2
+├── main.py                 # Aplicação FastAPI
+├── test_integracao.py      # Testes de integração e mockados
+├── test_health.py          # Teste do /health
+├── Dockerfile
+├── docker-compose.yml
+├── pytest.ini
+└── requirements.txt
 ```
 
 ---
 
-## 🔌 Endpoints da API
+## 🔌 Endpoints
 
-### `GET /`
-Retorna o formulário de denúncia (HTML).
-
-### `GET /api/cep/{cep}`
-Consulta o ViaCEP e retorna os dados de endereço para um CEP. Usado pelo
-frontend para autocompletar o campo de local.
-
-**Resposta (sucesso):**
-```json
-{
-  "cep": "70040-010",
-  "logradouro": "Esplanada dos Ministérios",
-  "bairro": "Zona Cívico-Administrativa",
-  "localidade": "Brasília",
-  "uf": "DF"
-}
-```
-
-### `POST /denunciar`
-Registra uma nova denúncia.
-
-**Campos (form-data):**
-
-| Campo | Tipo | Obrigatório |
+| Método | Rota | Descrição |
 |---|---|---|
-| data_ocorrido | Data | ✅ Sim |
-| horario_ocorrido | Hora | ❌ Opcional |
-| local_ocorrido | Texto | ✅ Sim |
-| descricao_ocorrido | Texto longo | ✅ Sim |
-| descricao_individuo | Texto longo | ✅ Sim |
-| tipo_ocorrido | Seleção | ❌ Opcional |
-| cep_ocorrido | Texto | ❌ Opcional |
+| GET | `/` | Formulário de denúncia (HTML) |
+| POST | `/denunciar` | Registra denúncia (form-data) |
+| GET | `/api/cep/{cep}` | Consulta endereço no ViaCEP |
+| GET | `/admin/denuncias` | Lista denúncias (HTML) |
+| GET | `/health` | `{"status": "ok", "version": "X.Y.Z"}` |
 
-**Resposta:**
-```json
-{
-  "sucesso": true,
-  "protocolo": "DEN-20260613-A1B2C3",
-  "endereco_confirmado": "Esplanada dos Ministérios",
-  "mensagem": "Sua denúncia foi registrada com sucesso e será analisada em sigilo absoluto."
-}
-```
-
-### `GET /admin/denuncias`
-Lista todas as denúncias registradas (HTML).
+Campos de `POST /denunciar`: `data_ocorrido`*, `local_ocorrido`*,
+`descricao_ocorrido`*, `descricao_individuo`*, `horario_ocorrido`,
+`tipo_ocorrido`, `cep_ocorrido` (*obrigatórios).
 
 ---
 
 ## 🚀 Rodando localmente
 
-### Pré-requisitos
-- Python 3.11+
-
-### Passos
+### Com Docker (recomendado)
 
 ```bash
 git clone https://github.com/HelenoJr05/Sistema-denuncias
 cd Sistema-denuncias
+docker compose up --build
+```
+
+Acesse `http://localhost:8000`. Os dados ficam no volume `denuncias_data`.
+
+Para rodar uma versão publicada específica (imagem do GHCR):
+
+```bash
+APP_TAG=1.0.0 docker compose pull app
+APP_TAG=1.0.0 docker compose up -d --no-build
+```
+
+### Sem Docker
+
+```bash
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
-
-Acesse `http://localhost:8000` para o formulário e
-`http://localhost:8000/admin/denuncias` para o painel administrativo.
 
 ---
 
@@ -127,28 +106,28 @@ Acesse `http://localhost:8000` para o formulário e
 ```bash
 pip install -r requirements.txt
 
-# Testes mockados (não precisam de internet, rodam no CI)
-pytest
-
-# Inclui também os testes de integração real contra o ViaCEP
-pytest -m integration
+pytest                   # testes mockados (padrão, sem internet; é o que o CI roda)
+pytest -m integration    # apenas os testes reais contra o ViaCEP (requer internet)
 ```
 
 ---
 
 ## 🔄 CI/CD
 
-Pipeline configurado em [`.github/workflows/ci.yml`](.github/workflows/ci.yml),
-executado automaticamente a cada `push` ou `pull request` para a branch `main`:
+**CI** (`ci.yml`): a cada push/PR para `main` roda `flake8` e `pytest`.
+A `main` é protegida: merge só via Pull Request com o CI verde.
 
-1. Checkout do código
-2. Setup do Python 3.11
-3. Instalação de dependências
-4. Lint com `flake8`
-5. Testes com `pytest`
+**CD** (`cd.yml`): ao criar uma tag `vX.Y.Z`:
 
-A branch `main` é protegida: merges exigem Pull Request revisado e o pipeline
-de CI passando.
+1. Testes
+2. Build da imagem e push no **GitHub Container Registry** (`X.Y.Z` e `latest`)
+3. Release no GitHub com notas automáticas
+4. Deploy simulado no ambiente `homologacao` (pull da imagem + smoke test)
+
+**Segredos:** nenhuma credencial fica no código. O login no registry usa o
+`GITHUB_TOKEN` do Secrets Management do GitHub Actions.
+
+**Versionamento e rollback:** veja [docs/ROLLBACK.md](docs/ROLLBACK.md).
 
 ---
 
@@ -161,4 +140,4 @@ de CI passando.
 
 ## 🛠️ Tecnologias
 
-Python 3.11 · FastAPI · Jinja2 · httpx · pytest · GitHub Actions
+Python 3.11 · FastAPI · Jinja2 · httpx · pytest · Docker · GitHub Actions · GHCR
