@@ -1,0 +1,70 @@
+name: Rollback
+
+# Execução manual: Actions > Rollback > Run workflow
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Versão anterior a restaurar, sem o 'v' (ex.: 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  rollback-homologacao:
+    name: Rollback em homologação (simulado)
+    runs-on: ubuntu-latest
+    environment: homologacao
+    permissions:
+      contents: read
+      packages: read
+    env:
+      APP_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validar formato da versão
+        run: |
+          if ! [[ "$APP_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Versão inválida: use o formato X.Y.Z (ex.: 1.0.0)"
+            exit 1
+          fi
+
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restaurar a versão anterior
+        run: |
+          export GHCR_OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          docker compose pull app
+          docker compose up -d --no-build
+
+      - name: Smoke test da versão restaurada
+        run: |
+          for i in $(seq 1 20); do
+            curl -fsS http://localhost:8000/health -o health.json && break
+            sleep 2
+          done
+          cat health.json
+          jq -e --arg v "$APP_TAG" '.status == "ok" and .version == $v' health.json
+
+      - name: Logs em caso de falha
+        if: failure()
+        run: docker compose logs app
+
+      - name: Resumo do rollback
+        if: success()
+        run: |
+          echo "### Rollback executado (simulado)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Versão restaurada: \`$APP_TAG\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Smoke test: OK" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Derrubar ambiente simulado
+        if: always()
+        run: docker compose down -v

@@ -10,6 +10,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # PostgreSQL descartável só para os testes de persistência
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: denuncias
+          POSTGRES_PASSWORD: denuncias
+          POSTGRES_DB: denuncias
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U denuncias -d denuncias"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TEST_DATABASE_URL: postgresql://denuncias:denuncias@localhost:5432/denuncias
+
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
