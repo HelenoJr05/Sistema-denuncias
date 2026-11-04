@@ -44,8 +44,11 @@ Integração externa: ViaCEP (enriquecimento de endereço)
 │   ├── cd.yml              # CD: build, GHCR, release, deploy simulado (tag vX.Y.Z)
 │   └── rollback.yml        # Rollback manual para uma versão anterior
 ├── docs/
-│   └── ROLLBACK.md         # Versionamento semântico e simulação de rollback
+│   ├── ROLLBACK.md         # Versionamento semântico e simulação de rollback
+│   └── evidencias/         # Prints da simulação de rollback
 ├── templates/              # Templates Jinja2
+├── .dockerignore
+├── .flake8                 # Configuração do lint
 ├── main.py                 # Aplicação FastAPI
 ├── test_integracao.py      # Testes de integração e mockados
 ├── test_health.py          # Teste do /health
@@ -92,6 +95,8 @@ APP_TAG=1.0.0 docker compose pull app
 APP_TAG=1.0.0 docker compose up -d --no-build
 ```
 
+Imagem publicada: `ghcr.io/helenojr05/sistema-denuncias` (tags `X.Y.Z` e `latest`).
+
 ### Sem Docker
 
 ```bash
@@ -115,7 +120,8 @@ pytest -m integration    # apenas os testes reais contra o ViaCEP (requer intern
 ## 🔄 CI/CD
 
 **CI** (`ci.yml`): a cada push/PR para `main` roda `flake8` e `pytest`.
-A `main` é protegida: merge só via Pull Request com o CI verde.
+A `main` é protegida por um ruleset: push direto bloqueado (sem bypass),
+merge somente via Pull Request e com o check `build` do CI verde.
 
 **CD** (`cd.yml`): ao criar uma tag `vX.Y.Z`:
 
@@ -124,10 +130,19 @@ A `main` é protegida: merge só via Pull Request com o CI verde.
 3. Release no GitHub com notas automáticas
 4. Deploy simulado no ambiente `homologacao` (pull da imagem + smoke test)
 
-**Segredos:** nenhuma credencial fica no código. O login no registry usa o
-`GITHUB_TOKEN` do Secrets Management do GitHub Actions.
+**Segredos:** nenhuma credencial fica no código nem no repositório. O login no
+registry usa o `GITHUB_TOKEN`, gerado automaticamente pelo GitHub Actions a cada
+execução e descartado ao final. O ambiente `homologacao` não possui segredos.
 
 **Versionamento e rollback:** veja [docs/ROLLBACK.md](docs/ROLLBACK.md).
+
+---
+
+## ⚠️ Limitações conhecidas
+
+- Persistência em arquivo JSON (sem banco de dados); previsto para evolução.
+- `/admin/denuncias` ainda não tem autenticação; previsto para a A3.
+- O ambiente de homologação é simulado (efêmero, roda no runner do GitHub Actions).
 
 ---
 
