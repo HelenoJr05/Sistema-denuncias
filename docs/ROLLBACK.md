@@ -67,12 +67,12 @@ Os prints ficam na pasta [`docs/evidencias/`](evidencias/).
 
 | Passo | O que foi feito | Evidência |
 |---|---|---|
-| 1 | Lançada a `v1.0.0` (versão estável). Pipeline CD verde: testes, build, push no GHCR, release e deploy com smoke test. Imagem publicada com as tags `1.0.0` e `latest`. | [`print_pipeline.png`](evidencias/print_pipeline.png), [`print_deploy.png`](evidencias/print_deploy.png), [`package_print.png`](evidencias/package_print.png), [`print_notas.png`](evidencias/print_notas.png) |
+| 1 | Lançada a `v1.0.0` (versão estável). Pipeline CD verde: testes, build, push no GHCR, release e deploy com smoke test. Imagem publicada com as tags `1.0.0` e `latest`. | [`print pipeline.png`](evidencias/print%20pipeline.png), [`print deploy.png`](evidencias/print%20deploy.png), [`package print.png`](evidencias/package%20print.png), [`print notas.png`](evidencias/print%20notas.png) |
 | 2 | Introduzido um defeito de propósito no `Dockerfile` (`CMD` apontando para `main:apps` em vez de `main:app`), via Pull Request. O CI passou, pois ele testa só o código Python. Lançada a `v1.1.0`. | PR `fix/defeito-simulado-v1-1-0` e tag `v1.1.0` |
-| 3 | O CD da `v1.1.0` construiu e publicou a imagem, mas o deploy em homologação **falhou** no smoke test: o container não iniciava. O log mostrou `Attribute "apps" not found in module "main"`. | [`evidencia_rollback_1.png`](evidencias/evidencia_rollback_1.png), [`evidencia_rollback_2.png`](evidencias/evidencia_rollback_2.png), [`evidencia_rollback_3.png`](evidencias/evidencia_rollback_3.png) |
-| 4 | Executado o workflow **Rollback** informando `1.0.0`. A imagem dessa versão foi baixada do registry e o ambiente voltou a subir. | [`evidencia_rollback_4.png`](evidencias/evidencia_rollback_4.png) |
-| 5 | O resumo do rollback confirmou a versão restaurada `1.0.0` e o smoke test (`/health` e envio de denúncia) funcionando. | [`evidencia_rollback_5.png`](evidencias/evidencia_rollback_5.png) |
-| 6 | Corrigido o `Dockerfile` por Pull Request (#7) e lançada a `v1.1.1`. Deploy verde, versão `1.1.1` no ar. | [`evidencia_v1_1_1.png`](evidencias/evidencia_v1_1_1.png), [`evidencia_release.png`](evidencias/evidencia_release.png) |
+| 3 | O CD da `v1.1.0` construiu e publicou a imagem, mas o deploy em homologação **falhou** no smoke test: o container não iniciava. O log mostrou `Attribute "apps" not found in module "main"`. | [`evidencia rollback 1.png`](evidencias/evidencia%20rollback%201.png), [`evidencia rollback 2.png`](evidencias/evidencia%20rollback%202.png), [`evidencia rollback 3.png`](evidencias/evidencia%20rollback%203.png) |
+| 4 | Executado o workflow **Rollback** informando `1.0.0`. A imagem dessa versão foi baixada do registry e o ambiente voltou a subir. | [`evidencia rollback 4.png`](evidencias/evidencia%20rollback%204.png) |
+| 5 | O resumo do rollback confirmou a versão restaurada `1.0.0` e o smoke test (`/health` e envio de denúncia) funcionando. | [`evidencia rollback 5.png`](evidencias/evidencia%20rollback%205.png) |
+| 6 | Corrigido o `Dockerfile` por Pull Request (#7) e lançada a `v1.1.1`. Deploy verde, versão `1.1.1` no ar. | [`evidencia v1.1.1.png`](evidencias/evidencia%20v1.1.1.png), [`evidencia release.png`](evidencias/evidencia%20release.png) |
 
 ### Registro da simulação
 
