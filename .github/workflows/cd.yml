@@ -13,6 +13,22 @@ jobs:
   test:
     name: Testes
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: denuncias
+          POSTGRES_PASSWORD: denuncias
+          POSTGRES_DB: denuncias
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U denuncias -d denuncias"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://denuncias:denuncias@localhost:5432/denuncias
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -107,27 +123,49 @@ jobs:
         run: |
           echo "GHCR_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
           export GHCR_OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          # Senha do PostgreSQL gerada a cada deploy: nada de credencial fixa no repositório
+          POSTGRES_PASSWORD="$(openssl rand -hex 16)"
+          echo "::add-mask::$POSTGRES_PASSWORD"
+          echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> "$GITHUB_ENV"
+          export POSTGRES_PASSWORD
           docker compose pull app
           docker compose up -d --no-build
 
       - name: Smoke test
         run: |
-          for i in $(seq 1 20); do
-            curl -fsS http://localhost:8000/health -o health.json && break
-            sleep 2
-          done
+          esperar_saude() {
+            for i in $(seq 1 30); do
+              curl -fsS http://localhost:8000/health -o health.json && return 0
+              sleep 2
+            done
+            return 1
+          }
+
+          esperar_saude
           cat health.json
           jq -e --arg v "$APP_TAG" '.status == "ok" and .version == $v' health.json
 
-          curl -fsS -X POST http://localhost:8000/denunciar \
+          # Grava uma denúncia pela API
+          PROTOCOLO=$(curl -fsS -X POST http://localhost:8000/denunciar \
             -F data_ocorrido=2026-01-01 \
             -F local_ocorrido="smoke test" \
             -F descricao_ocorrido="smoke test" \
-            -F descricao_individuo="smoke test"
+            -F descricao_individuo="smoke test" | jq -r .protocolo)
+          echo "Protocolo: $PROTOCOLO"
+
+          # Confere que a linha existe de fato no PostgreSQL
+          docker compose exec -T db psql -U denuncias -d denuncias -tAc \
+            "SELECT count(*) FROM denuncias WHERE protocolo = '$PROTOCOLO'" | grep -qx 1
+
+          # Reinicia a aplicação e confere que o dado sobreviveu (persistência real)
+          docker compose restart app
+          esperar_saude
+          docker compose exec -T db psql -U denuncias -d denuncias -tAc \
+            "SELECT count(*) FROM denuncias WHERE protocolo = '$PROTOCOLO'" | grep -qx 1
 
       - name: Logs em caso de falha
         if: failure()
-        run: docker compose logs app
+        run: docker compose logs app db
 
       - name: Resumo do deploy
         if: success()
@@ -135,6 +173,7 @@ jobs:
           echo "### Deploy em homologação (simulado)" >> "$GITHUB_STEP_SUMMARY"
           echo "- Versão: \`$APP_TAG\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Imagem: \`ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/sistema-denuncias:$APP_TAG\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Banco: PostgreSQL (denúncia gravada e mantida após reinício da aplicação)" >> "$GITHUB_STEP_SUMMARY"
           echo "- Smoke test: OK" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Derrubar ambiente simulado
