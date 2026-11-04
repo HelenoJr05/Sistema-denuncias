@@ -77,7 +77,9 @@ jobs:
       - name: Criar release com notas automáticas
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --generate-notes --title "$GITHUB_REF_NAME"
+         run: |
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+            || gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --generate-notes --title "$GITHUB_REF_NAME"
 
   deploy-homologacao:
     name: Deploy em homologação (simulado)
