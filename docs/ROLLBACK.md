@@ -1,4 +1,3 @@
-[ROLLBACK.md](https://github.com/user-attachments/files/34132305/ROLLBACK.md)
 # Versionamento e Rollback
 
 Este documento descreve como o projeto versiona suas imagens/releases e como
@@ -63,23 +62,31 @@ um novo PATCH (ex.: `v1.1.1`).
 
 ## Simulação documentada
 
-Preencha com as evidências reais (prints do Actions e saída dos comandos).
+Simulação executada em ambiente de homologação simulado (GitHub Actions).
+Os prints ficam na pasta [`docs/evidencias/`](evidencias/).
 
-| Passo | O que fazer | Evidência |
+| Passo | O que foi feito | Evidência |
 |---|---|---|
-| 1 | Lançar `v1.0.0` (versão estável) e confirmar o deploy verde | print do run do CD |
-| 2 | Introduzir um defeito que os testes automatizados não cobrem (ex.: quebrar algo visível no `templates/index.html`), mesclar via PR e lançar `v1.1.0` | link do PR e da tag |
-| 3 | Observar o defeito em uso (abrir a aplicação) ou no log do deploy | print / log |
-| 4 | Executar o rollback para `1.0.0` (Opção 1 ou 2) | print do run do Rollback |
-| 5 | Confirmar `GET /health` com `"version": "1.0.0"` e envio de denúncia funcionando | saída do `curl` |
-| 6 | Registrar a causa e a correção (novo PATCH) | texto abaixo |
+| 1 | Lançada a `v1.0.0` (versão estável). Pipeline CD verde: testes, build, push no GHCR, release e deploy com smoke test. Imagem publicada com as tags `1.0.0` e `latest`. | [`print_pipeline.png`](evidencias/print_pipeline.png), [`print_deploy.png`](evidencias/print_deploy.png), [`package_print.png`](evidencias/package_print.png), [`print_notas.png`](evidencias/print_notas.png) |
+| 2 | Introduzido um defeito de propósito no `Dockerfile` (`CMD` apontando para `main:apps` em vez de `main:app`), via Pull Request. O CI passou, pois ele testa só o código Python. Lançada a `v1.1.0`. | PR `fix/defeito-simulado-v1-1-0` e tag `v1.1.0` |
+| 3 | O CD da `v1.1.0` construiu e publicou a imagem, mas o deploy em homologação **falhou** no smoke test: o container não iniciava. O log mostrou `Attribute "apps" not found in module "main"`. | [`evidencia_rollback_1.png`](evidencias/evidencia_rollback_1.png), [`evidencia_rollback_2.png`](evidencias/evidencia_rollback_2.png), [`evidencia_rollback_3.png`](evidencias/evidencia_rollback_3.png) |
+| 4 | Executado o workflow **Rollback** informando `1.0.0`. A imagem dessa versão foi baixada do registry e o ambiente voltou a subir. | [`evidencia_rollback_4.png`](evidencias/evidencia_rollback_4.png) |
+| 5 | O resumo do rollback confirmou a versão restaurada `1.0.0` e o smoke test (`/health` e envio de denúncia) funcionando. | [`evidencia_rollback_5.png`](evidencias/evidencia_rollback_5.png) |
+| 6 | Corrigido o `Dockerfile` por Pull Request (#7) e lançada a `v1.1.1`. Deploy verde, versão `1.1.1` no ar. | [`evidencia_v1_1_1.png`](evidencias/evidencia_v1_1_1.png), [`evidencia_release.png`](evidencias/evidencia_release.png) |
 
 ### Registro da simulação
 
-- **Data/hora:**
-- **Versão com falha:**
-- **Sintoma observado:**
-- **Tempo até detectar:**
-- **Ação tomada:**
-- **Versão restaurada:**
-- **Causa raiz e correção definitiva:**
+- **Data/hora:** [preencher com a data e a hora da release `v1.1.0`]
+- **Versão com falha:** `v1.1.0`
+- **Sintoma observado:** deploy em homologação reprovado no smoke test; `curl` sem conseguir conectar na porta 8000 durante cerca de 40 segundos.
+- **Tempo até detectar:** cerca de 1min30 após a publicação da release (testes 10s + build 30s + deploy 49s).
+- **Ação tomada:** execução do workflow Rollback para a versão `1.0.0` (14s).
+- **Versão restaurada:** `1.0.0`, validada por smoke test.
+- **Causa raiz:** erro de digitação no `CMD` do `Dockerfile` (`main:apps`). O uvicorn não encontrou o objeto da aplicação e o container reiniciava em loop.
+- **Correção definitiva:** PR #7 corrigindo o `CMD`; lançada a `v1.1.1`.
+
+### Lições aprendidas e melhorias
+
+- O CI não detectou o defeito, porque não constrói nem sobe a imagem. Melhoria possível: adicionar um build da imagem e um teste de inicialização (`/health`) ao CI, para barrar o problema antes do merge.
+- O pipeline publicou a tag `latest` apontando para a `v1.1.0` **antes** de o deploy ser validado. Durante a falha, quem usasse `latest` receberia a versão com defeito. Melhoria possível: só mover a tag `latest` depois que o deploy em homologação passar.
+- O rollback funcionou como esperado, e o smoke test do deploy foi o que impediu a versão defeituosa de ser considerada saudável.
