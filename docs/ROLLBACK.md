@@ -57,8 +57,14 @@ curl http://localhost:8000/health    # deve mostrar "version": "1.0.0"
 Quando o problema é pequeno: `git revert <commit>` via Pull Request e lançar
 um novo PATCH (ex.: `v1.1.1`).
 
-> **Dados:** as denúncias ficam no volume `denuncias_data`, que **não** é
-> alterado pelo rollback da imagem. Só o código volta de versão.
+> **Dados:** a partir da `v1.2.0` as denúncias ficam no PostgreSQL (volume
+> `pgdata`), que **não** é alterado pelo rollback da imagem. Só o código volta
+> de versão.
+>
+> **Atenção ao voltar para uma versão anterior à `1.2.0`:** essas versões gravam
+> em arquivo JSON (volume `denuncias_data`) e não enxergam o banco. As denúncias
+> registradas no PostgreSQL continuam guardadas e voltam a aparecer ao
+> restaurar a `1.2.0` ou superior.
 
 ## Simulação documentada
 
@@ -76,7 +82,7 @@ Os prints ficam na pasta [`docs/evidencias/`](evidencias/).
 
 ### Registro da simulação
 
-- **Data/hora:** [preencher com a data e a hora da release `v1.1.0`]
+- **Data/hora:** 04/11/2026, 10:03 (horário de Brasília)
 - **Versão com falha:** `v1.1.0`
 - **Sintoma observado:** deploy em homologação reprovado no smoke test; `curl` sem conseguir conectar na porta 8000 durante cerca de 40 segundos.
 - **Tempo até detectar:** cerca de 1min30 após a publicação da release (testes 10s + build 30s + deploy 49s).

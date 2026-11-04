@@ -1,4 +1,22 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: sistema-denuncias-db
+    environment:
+      POSTGRES_USER: denuncias
+      POSTGRES_DB: denuncias
+      # Senha vem do ambiente (.env local ou gerada pelo pipeline); nada de segredo no código.
+      # O valor padrão serve só para desenvolvimento local.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-denuncias_dev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U denuncias -d denuncias"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
   app:
     # Em deploy, a imagem vem do GHCR na versão escolhida (APP_TAG).
     # Em desenvolvimento, "docker compose up --build" constrói a imagem localmente.
@@ -11,11 +29,17 @@ services:
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
-      DENUNCIAS_FILE: /data/denuncias.json
+      DATABASE_URL: postgresql://denuncias:${POSTGRES_PASSWORD:-denuncias_dev}@db:5432/denuncias
       APP_VERSION: ${APP_TAG:-dev}
+      # Usado apenas por versões anteriores à 1.2.0 (persistência em JSON), para o rollback.
+      DENUNCIAS_FILE: /data/denuncias.json
     volumes:
       - denuncias_data:/data
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
+  pgdata:
   denuncias_data:

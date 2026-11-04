@@ -1,37 +1,139 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from datetime import datetime
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Optional
 import json
 import os
+import time
 import uuid
+
 import httpx
+import psycopg
+from fastapi import FastAPI, Request, Form
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from psycopg.rows import dict_row
+from psycopg.types.json import Jsonb
 
-app = FastAPI(title="Sistema de Denúncias Anônimas - Homofobia")
-
-templates = Jinja2Templates(directory="templates")
-
-DENUNCIAS_FILE = os.getenv("DENUNCIAS_FILE", "denuncias.json")
 APP_VERSION = os.getenv("APP_VERSION", "dev")
 
-# ─────────────────────────────────────────────
-# Funções auxiliares de persistência
-# ─────────────────────────────────────────────
+# Persistência:
+#   - com DATABASE_URL definida  -> PostgreSQL (modo usado no docker compose)
+#   - sem DATABASE_URL           -> arquivo JSON (desenvolvimento local e testes)
+DENUNCIAS_FILE = os.getenv("DENUNCIAS_FILE", "denuncias.json")
 
 
-def carregar_denuncias():
+def database_url() -> Optional[str]:
+    return os.getenv("DATABASE_URL") or None
+
+
+# ─────────────────────────────────────────────
+# Persistência: PostgreSQL
+# ─────────────────────────────────────────────
+
+SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS denuncias (
+    id                   TEXT PRIMARY KEY,
+    protocolo            TEXT NOT NULL UNIQUE,
+    data_registro        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    data_ocorrido        TEXT NOT NULL,
+    horario_ocorrido     TEXT NOT NULL,
+    data_hora_formatada  TEXT NOT NULL,
+    local_ocorrido       TEXT NOT NULL,
+    cep_ocorrido         TEXT NOT NULL,
+    endereco_enriquecido JSONB NOT NULL DEFAULT '{}'::jsonb,
+    descricao_ocorrido   TEXT NOT NULL,
+    descricao_individuo  TEXT NOT NULL,
+    tipo_ocorrido        TEXT NOT NULL,
+    status               TEXT NOT NULL DEFAULT 'Recebida'
+)
+"""
+
+INSERT_SQL = """
+INSERT INTO denuncias (
+    id, protocolo, data_registro, data_ocorrido, horario_ocorrido,
+    data_hora_formatada, local_ocorrido, cep_ocorrido, endereco_enriquecido,
+    descricao_ocorrido, descricao_individuo, tipo_ocorrido, status
+) VALUES (
+    %(id)s, %(protocolo)s, %(data_registro)s, %(data_ocorrido)s, %(horario_ocorrido)s,
+    %(data_hora_formatada)s, %(local_ocorrido)s, %(cep_ocorrido)s, %(endereco_enriquecido)s,
+    %(descricao_ocorrido)s, %(descricao_individuo)s, %(tipo_ocorrido)s, %(status)s
+)
+"""
+
+
+def init_db(tentativas: int = 30, espera: float = 1.0) -> None:
+    """Cria a tabela se não existir. Aguarda o banco aceitar conexões."""
+    ultimo_erro = None
+    for _ in range(tentativas):
+        try:
+            with psycopg.connect(database_url()) as conn:
+                conn.execute(SCHEMA_SQL)
+            return
+        except psycopg.OperationalError as erro:
+            ultimo_erro = erro
+            time.sleep(espera)
+    raise RuntimeError(f"Banco de dados indisponível: {ultimo_erro}")
+
+
+def _salvar_postgres(denuncia: dict) -> None:
+    registro = dict(denuncia)
+    registro["endereco_enriquecido"] = Jsonb(denuncia["endereco_enriquecido"])
+    with psycopg.connect(database_url()) as conn:
+        conn.execute(INSERT_SQL, registro)
+
+
+def _carregar_postgres() -> list:
+    with psycopg.connect(database_url(), row_factory=dict_row) as conn:
+        linhas = conn.execute("SELECT * FROM denuncias ORDER BY data_registro").fetchall()
+    for linha in linhas:
+        linha["data_registro"] = linha["data_registro"].isoformat()
+    return linhas
+
+
+# ─────────────────────────────────────────────
+# Persistência: arquivo JSON (fallback)
+# ─────────────────────────────────────────────
+
+def _carregar_json() -> list:
     if os.path.exists(DENUNCIAS_FILE):
         with open(DENUNCIAS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return []
 
 
-def salvar_denuncia(denuncia: dict):
-    denuncias = carregar_denuncias()
+def _salvar_json(denuncia: dict) -> None:
+    denuncias = _carregar_json()
     denuncias.append(denuncia)
     with open(DENUNCIAS_FILE, "w", encoding="utf-8") as f:
         json.dump(denuncias, f, ensure_ascii=False, indent=2)
+
+
+# ─────────────────────────────────────────────
+# Interface de persistência usada pelas rotas
+# ─────────────────────────────────────────────
+
+def carregar_denuncias() -> list:
+    return _carregar_postgres() if database_url() else _carregar_json()
+
+
+def salvar_denuncia(denuncia: dict) -> None:
+    if database_url():
+        _salvar_postgres(denuncia)
+    else:
+        _salvar_json(denuncia)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    if database_url():
+        await run_in_threadpool(init_db)
+    yield
+
+
+app = FastAPI(title="Sistema de Denúncias Anônimas - Homofobia", lifespan=lifespan)
+
+templates = Jinja2Templates(directory="templates")
 
 
 # ─────────────────────────────────────────────
@@ -106,10 +208,11 @@ async def registrar_denuncia(
     if cep_ocorrido:
         dados_endereco = await buscar_endereco_por_cep(cep_ocorrido)
 
+    agora = datetime.now(timezone.utc)
     denuncia = {
         "id": str(uuid.uuid4())[:8].upper(),
-        "protocolo": f"DEN-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}",
-        "data_registro": datetime.now().isoformat(),
+        "protocolo": f"DEN-{agora.strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}",
+        "data_registro": agora.isoformat(),
         "data_ocorrido": data_ocorrido,
         "horario_ocorrido": horario_ocorrido or "Não informado",
         "data_hora_formatada": data_hora,
@@ -122,7 +225,7 @@ async def registrar_denuncia(
         "status": "Recebida"
     }
 
-    salvar_denuncia(denuncia)
+    await run_in_threadpool(salvar_denuncia, denuncia)
 
     return {
         "sucesso": True,
@@ -134,7 +237,7 @@ async def registrar_denuncia(
 
 @app.get("/admin/denuncias", response_class=HTMLResponse)
 async def listar_denuncias(request: Request):
-    denuncias = carregar_denuncias()
+    denuncias = await run_in_threadpool(carregar_denuncias)
     context = {"denuncias": denuncias, "total": len(denuncias)}
     try:
         return templates.TemplateResponse(request, "admin.html", context)
